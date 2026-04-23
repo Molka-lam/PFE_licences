@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 
 
@@ -10,7 +11,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     first_name: str | None
     last_name: str | None
-    role: str
+    role: Literal["super_admin", "admin", "client"]
     is_active: bool
     email_verified: bool
     email_opt_in: bool
@@ -29,12 +30,17 @@ class UserUpdate(BaseModel):
 
 class AdminUserUpdate(BaseModel):
     """Fields an admin can update on any user."""
-    role: str | None = None
+    role: Literal["super_admin", "admin", "client"] | None = None
     is_active: bool | None = None
 
-    @field_validator("role")
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
     @classmethod
-    def valid_role(cls, v: str | None) -> str | None:
-        if v is not None and v not in {"super_admin", "admin", "client"}:
-            raise ValueError("role must be super_admin, admin, or client")
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
         return v

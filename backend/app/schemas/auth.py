@@ -1,6 +1,12 @@
 from pydantic import BaseModel, EmailStr, field_validator
 
 
+def _validate_password(v: str) -> str:
+    if len(v) < 8:
+        raise ValueError("Password must be at least 8 characters")
+    return v
+
+
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
@@ -10,9 +16,7 @@ class RegisterRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def password_strength(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters")
-        return v
+        return _validate_password(v)
 
 
 class LoginRequest(BaseModel):
@@ -41,9 +45,7 @@ class ResetPasswordRequest(BaseModel):
     @field_validator("new_password")
     @classmethod
     def password_strength(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters")
-        return v
+        return _validate_password(v)
 
 
 class VerifyEmailRequest(BaseModel):
