@@ -18,7 +18,7 @@ def upgrade() -> None:
     # 1. users
     op.create_table(
         'users',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
         sa.Column('email', sa.String(255), nullable=False),
         sa.Column('hashed_password', sa.String(255), nullable=False),
         sa.Column('first_name', sa.String(100), nullable=True),
@@ -41,8 +41,8 @@ def upgrade() -> None:
     # 2. refresh_tokens
     op.create_table(
         'refresh_tokens',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('user_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
         sa.Column('token_hash', sa.String(64), nullable=False),
         sa.Column('revoked', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
@@ -55,7 +55,7 @@ def upgrade() -> None:
     # 3. plans
     op.create_table(
         'plans',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
         sa.Column('name', sa.String(100), nullable=False),
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('price_monthly', sa.Numeric(10, 2), nullable=True),
@@ -70,11 +70,11 @@ def upgrade() -> None:
     # 4. applications (FK -> users)
     op.create_table(
         'applications',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
         sa.Column('app_code', sa.String(100), nullable=False),
         sa.Column('name', sa.String(255), nullable=False),
         sa.Column('description', sa.Text(), nullable=True),
-        sa.Column('owner_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('owner_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('environment', sa.String(20), nullable=False, server_default='development'),
         sa.Column('api_key_hash', sa.String(64), nullable=True),
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default=sa.text('true')),
@@ -87,10 +87,10 @@ def upgrade() -> None:
     # 5. licenses (FK -> applications, plans, users)
     op.create_table(
         'licenses',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('application_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('applications.id'), nullable=False),
-        sa.Column('plan_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('plans.id'), nullable=False),
-        sa.Column('owner_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('application_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('applications.id'), nullable=False),
+        sa.Column('plan_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('plans.id'), nullable=False),
+        sa.Column('owner_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('status', sa.String(20), nullable=False, server_default='requested'),
         sa.Column('expires_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
@@ -103,11 +103,11 @@ def upgrade() -> None:
     # 6. license_transitions (FK -> licenses, users)
     op.create_table(
         'license_transitions',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('license_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('licenses.id'), nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('license_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('licenses.id'), nullable=False),
         sa.Column('from_status', sa.String(20), nullable=True),
         sa.Column('to_status', sa.String(20), nullable=False),
-        sa.Column('actor_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('actor_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('note', sa.Text(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
     )
@@ -115,14 +115,14 @@ def upgrade() -> None:
     # 7. license_keys (FK -> licenses, users)
     op.create_table(
         'license_keys',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('license_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('licenses.id'), nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('license_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('licenses.id'), nullable=False),
         sa.Column('public_key', sa.Text(), nullable=False),
         sa.Column('private_key_encrypted', sa.Text(), nullable=False),
         sa.Column('encryption_iv', sa.String(32), nullable=False),
-        sa.Column('generated_by', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('generated_by', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('private_key_first_downloaded_at', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('private_key_first_downloaded_by', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('private_key_first_downloaded_by', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
         sa.UniqueConstraint('license_id', name='uq_license_keys_license_id'),
@@ -131,22 +131,22 @@ def upgrade() -> None:
     # 8. notifications (FK -> users, licenses)
     op.create_table(
         'notifications',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('user_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('channel', sa.String(20), nullable=False, server_default='in_app'),
         sa.Column('title', sa.String(255), nullable=False),
         sa.Column('message', sa.Text(), nullable=False),
         sa.Column('is_read', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('read_at', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('related_license_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('licenses.id'), nullable=True),
+        sa.Column('related_license_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('licenses.id'), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
     )
 
     # 9. usage_records (FK -> licenses)
     op.create_table(
         'usage_records',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('license_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('licenses.id'), nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('license_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('licenses.id'), nullable=False),
         sa.Column('year', sa.Integer(), nullable=False),
         sa.Column('month', sa.Integer(), nullable=False),
         sa.Column('api_calls_count', sa.Integer(), nullable=False, server_default=sa.text('0')),
@@ -160,11 +160,11 @@ def upgrade() -> None:
     # 10. audit_logs (FK -> users)
     op.create_table(
         'audit_logs',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('actor_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('actor_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('action', sa.String(100), nullable=False),
         sa.Column('resource_type', sa.String(50), nullable=True),
-        sa.Column('resource_id', postgresql.UUID(as_uuid=False), nullable=True),
+        sa.Column('resource_id', postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column('metadata', postgresql.JSONB(), nullable=True),
         sa.Column('ip_address', sa.String(45), nullable=True),
         sa.Column('user_agent', sa.String(500), nullable=True),
@@ -174,8 +174,8 @@ def upgrade() -> None:
     # 11. webhooks (FK -> users)
     op.create_table(
         'webhooks',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('owner_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('owner_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('url', sa.String(2048), nullable=False),
         sa.Column('secret_hash', sa.String(64), nullable=False),
         sa.Column('events', postgresql.JSONB(), nullable=False, server_default=sa.text("'[]'::jsonb")),
@@ -187,8 +187,8 @@ def upgrade() -> None:
     # 12. webhook_deliveries (FK -> webhooks)
     op.create_table(
         'webhook_deliveries',
-        sa.Column('id', postgresql.UUID(as_uuid=False), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column('webhook_id', postgresql.UUID(as_uuid=False), sa.ForeignKey('webhooks.id'), nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column('webhook_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('webhooks.id'), nullable=False),
         sa.Column('event_type', sa.String(100), nullable=False),
         sa.Column('payload', postgresql.JSONB(), nullable=False),
         sa.Column('status', sa.String(20), nullable=False, server_default='pending'),
