@@ -31,3 +31,19 @@ def create_refresh_token(subject: str) -> str:
 def decode_token(token: str) -> dict:
     """Decode and verify an RS256 token. Raises JWTError if invalid/expired."""
     return jwt.decode(token, settings.JWT_PUBLIC_KEY, algorithms=[ALGORITHM])
+
+
+def decode_access_token(token: str) -> dict:
+    """Decode an access token. Raises JWTError if invalid, expired, or wrong type."""
+    payload = decode_token(token)
+    if payload.get("type") != "access":
+        raise JWTError("Expected access token")
+    return payload
+
+
+def decode_refresh_token(token: str) -> dict:
+    """Decode a refresh token. Raises JWTError if invalid, expired, or wrong type."""
+    payload = decode_token(token)
+    if payload.get("type") != "refresh":
+        raise JWTError("Expected refresh token")
+    return payload

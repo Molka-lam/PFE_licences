@@ -60,3 +60,57 @@ def test_invalid_token_raises(rsa_keys):
         from app.core.jwt import decode_token, JWTError
         with pytest.raises(JWTError):
             decode_token("not.a.valid.token")
+
+
+def test_expired_token_raises(rsa_keys):
+    from datetime import timedelta
+    private_pem, public_pem = rsa_keys
+    with patch("app.core.jwt.settings") as mock_settings:
+        mock_settings.JWT_PRIVATE_KEY = private_pem
+        mock_settings.JWT_PUBLIC_KEY = public_pem
+        mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = -1  # already expired
+        mock_settings.REFRESH_TOKEN_EXPIRE_DAYS = 7
+        from app.core.jwt import create_access_token, decode_token
+        from jose import JWTError
+        token = create_access_token("user-exp", "client")
+        with pytest.raises(JWTError):
+            decode_token(token)
+
+
+def test_wrong_key_raises(rsa_keys):
+    private_pem, public_pem = rsa_keys
+    _, other_public_pem = make_rsa_key_pair()  # different public key
+    with patch("app.core.jwt.settings") as mock_settings:
+        mock_settings.JWT_PRIVATE_KEY = private_pem
+        mock_settings.JWT_PUBLIC_KEY = other_public_pem  # mismatched key
+        mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 15
+        mock_settings.REFRESH_TOKEN_EXPIRE_DAYS = 7
+        from app.core.jwt import create_access_token, decode_token
+        from jose import JWTError
+        token = create_access_token("user-wrong", "admin")
+        with pytest.raises(JWTError):
+            decode_token(token)
+
+
+def test_type_enforcing_wrappers(rsa_keys):
+    private_pem, public_pem = rsa_keys
+    with patch("app.core.jwt.settings") as mock_settings:
+        mock_settings.JWT_PRIVATE_KEY = private_pem
+        mock_settings.JWT_PUBLIC_KEY = public_pem
+        mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 15
+        mock_settings.REFRESH_TOKEN_EXPIRE_DAYS = 7
+        from app.core.jwt import (
+            create_access_token, create_refresh_token,
+            decode_access_token, decode_refresh_token,
+        )
+        from jose import JWTError
+        access_tok = create_access_token("u1", "admin")
+        refresh_tok = create_refresh_token("u1")
+        # Correct usage
+        assert decode_access_token(access_tok)["type"] == "access"
+        assert decode_refresh_token(refresh_tok)["type"] == "refresh"
+        # Wrong type raises
+        with pytest.raises(JWTError):
+            decode_access_token(refresh_tok)
+        with pytest.raises(JWTError):
+            decode_refresh_token(access_tok)

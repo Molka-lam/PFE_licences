@@ -20,9 +20,8 @@ def test_unknown_from_status():
     assert not can_transition("nonexistent", "active", "admin")
 
 def test_revoked_is_terminal():
-    # No transitions OUT of revoked
-    for (from_s, _), _ in VALID_TRANSITIONS.items():
-        pass  # just verify no transition starts from revoked
+    for (from_s, _) in VALID_TRANSITIONS:
+        assert from_s != "revoked", f"revoked must be terminal, found outgoing transition from it"
     assert not can_transition("revoked", "active", "admin")
     assert not can_transition("revoked", "suspended", "super_admin")
 

@@ -1,12 +1,12 @@
-VALID_TRANSITIONS: dict[tuple[str, str], list[str]] = {
-    ("requested",   "in_progress"): ["admin", "super_admin"],
-    ("in_progress", "active"):      ["admin", "super_admin"],
-    ("active",      "suspended"):   ["admin", "super_admin"],
-    ("active",      "revoked"):     ["admin", "super_admin"],
-    ("suspended",   "active"):      ["admin", "super_admin"],
-    ("suspended",   "revoked"):     ["admin", "super_admin"],
-    ("active",      "expired"):     ["system"],
-    ("suspended",   "expired"):     ["system"],
+VALID_TRANSITIONS: dict[tuple[str, str], frozenset[str]] = {
+    ("requested",   "in_progress"): frozenset({"admin", "super_admin"}),
+    ("in_progress", "active"):      frozenset({"admin", "super_admin"}),
+    ("active",      "suspended"):   frozenset({"admin", "super_admin"}),
+    ("active",      "revoked"):     frozenset({"admin", "super_admin"}),
+    ("suspended",   "active"):      frozenset({"admin", "super_admin"}),
+    ("suspended",   "revoked"):     frozenset({"admin", "super_admin"}),
+    ("active",      "expired"):     frozenset({"system"}),
+    ("suspended",   "expired"):     frozenset({"system"}),
 }
 
 
