@@ -4,8 +4,6 @@ from app.config import settings
 
 ALGORITHM = "RS256"
 
-from jose import JWTError as JWTError  # re-export
-
 
 def create_access_token(subject: str, role: str) -> str:
     """Create a 15-minute RS256 access token. subject = user ID (str)."""
