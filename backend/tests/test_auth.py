@@ -26,6 +26,9 @@ from app.services.auth_service import (
 def _make_db() -> AsyncMock:
     db = AsyncMock()
     db.add = MagicMock()
+    # AsyncMock auto-creates child attributes as AsyncMock; execute's return value
+    # must be a plain MagicMock so .scalar_one_or_none() is called synchronously.
+    db.execute.return_value = MagicMock()
     return db
 
 
