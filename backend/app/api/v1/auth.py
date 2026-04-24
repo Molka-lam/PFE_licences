@@ -14,13 +14,13 @@ from app.schemas.auth import (
     TokenResponse,
     VerifyEmailRequest,
 )
+from app.config import settings
 from app.schemas.common import MessageResponse
 from app.schemas.user import UserResponse
 from app.services import auth_service
 
 _COOKIE_NAME = "refresh_token"
 _COOKIE_PATH = "/api/v1/auth"
-_REFRESH_TTL = 7 * 24 * 60 * 60  # 7 days in seconds
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -30,19 +30,20 @@ def _set_refresh_cookie(response: Response, token: str) -> None:
         key=_COOKIE_NAME,
         value=token,
         httponly=True,
-        secure=True,
+        secure=settings.COOKIE_SECURE,
         samesite="lax",
         path=_COOKIE_PATH,
-        max_age=_REFRESH_TTL,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
     )
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)) -> User:
     try:
-        user = await auth_service.register_user(
+        user, _raw_verify_token = await auth_service.register_user(
             db, body.email, body.password, body.first_name, body.last_name
         )
+        # _raw_verify_token is used in Phase 5 to send the verification email
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
     return user

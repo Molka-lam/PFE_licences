@@ -59,7 +59,7 @@ async def change_my_password(
 # Admin endpoints
 # ---------------------------------------------------------------------------
 
-@router.get("", response_model=PaginatedResponse)
+@router.get("", response_model=PaginatedResponse[UserResponse])
 async def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -115,6 +115,9 @@ async def update_user(
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> User:
+    if user_id == admin.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot modify your own account")
+
     result = await db.execute(
         select(User).where(User.id == user_id, User.deleted_at.is_(None))
     )

@@ -175,6 +175,36 @@ class TestUpdateUser:
         assert call_kwargs["action"] == "user.updated"
         assert call_kwargs["event_metadata"]["old_role"] == "client"
 
+    async def test_is_active_change_logged(self) -> None:
+        from app.api.v1.users import update_user
+        db = _make_db()
+        target = _make_user(role="client", is_active=True)
+        db.execute.return_value.scalar_one_or_none.return_value = target
+        db.refresh = AsyncMock(return_value=None)
+        with patch("app.api.v1.users.audit_service.log_event", new_callable=AsyncMock) as mock_log:
+            await update_user(
+                user_id=target.id,
+                body=AdminUserUpdate(is_active=False),
+                admin=_make_user(role="admin"),
+                db=db,
+            )
+        mock_log.assert_called_once()
+        assert mock_log.call_args.kwargs["event_metadata"]["old_is_active"] is True
+
+    async def test_self_modification_raises_400(self) -> None:
+        from fastapi import HTTPException
+        from app.api.v1.users import update_user
+        db = _make_db()
+        admin = _make_user(role="admin")
+        with pytest.raises(HTTPException) as exc_info:
+            await update_user(
+                user_id=admin.id,  # same as admin's own id
+                body=AdminUserUpdate(role="client"),
+                admin=admin,
+                db=db,
+            )
+        assert exc_info.value.status_code == 400
+
     async def test_no_change_no_audit_log(self) -> None:
         from app.api.v1.users import update_user
         db = _make_db()
